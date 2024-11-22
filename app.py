@@ -395,6 +395,15 @@ def update_team(team_id):
     flash('Team updated successfully!')
     return redirect(url_for('manage_teams'))
 
+# Function to check if the panel already exists in the database
+def panel_exists(panel_name):
+    db = connect_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT COUNT(*) FROM Panel WHERE PanelName = %s", (panel_name,))
+    count = cursor.fetchone()[0]
+    db.close()
+    return count > 0
+
 # Route for managing panels
 @app.route('/manage_panels', methods=['GET', 'POST'])
 @login_required
@@ -411,16 +420,22 @@ def manage_panels():
         panel_name = request.form['panel_name']
         dept_id = request.form['dept_id']
         
-        if panel_id:  # If panel_id is present, we are updating
-            cursor.execute("UPDATE Panel SET PanelName = %s, DeptID = %s WHERE PanelID = %s",
-                           (panel_name, dept_id, panel_id))
-            flash('Panel updated successfully!', 'success')
-        else:  # Otherwise, we are adding a new panel
-            cursor.execute("INSERT INTO Panel (PanelName, DeptID) VALUES (%s, %s)",
-                           (panel_name, dept_id))
-            flash('Panel added successfully!', 'success')
+        if panel_exists(panel_name):  # Check if the panel already exists
+            flash('Panel with this name already exists!', 'error')
+        else:
+            if panel_id:  # If panel_id is present, we are updating
+                cursor.execute("UPDATE Panel SET PanelName = %s, DeptID = %s WHERE PanelID = %s",
+                               (panel_name, dept_id, panel_id))
+                flash('Panel updated successfully!', 'success')
+            else:  # Otherwise, we are adding a new panel
+                cursor.execute("INSERT INTO Panel (PanelName, DeptID) VALUES (%s, %s)",
+                               (panel_name, dept_id))
+                flash('Panel added successfully!', 'success')
 
-        db.commit()
+            db.commit()
+
+        # Redirect to the same page to prevent resubmission (PRG Pattern)
+        return redirect(url_for('manage_panels'))
 
     # Retrieve the current panels and departments for the dropdown
     cursor.execute("SELECT * FROM Panel")
@@ -496,7 +511,8 @@ def update_faculty():
     faculty_name = request.form.get('faculty_name')
     designation = request.form.get('designation')
     panel_id = request.form.get('panel_id')
-
+    # Debugging
+    print(f"Received form data: {faculty_id}, {faculty_name}, {designation}, {panel_id}")
     db = connect_db()
     cursor = db.cursor()
     
@@ -733,17 +749,19 @@ def update_student_ajax():
     db = connect_db()
     cursor = db.cursor()
 
+    salt = bcrypt.gensalt()  # Generate a salt
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
+
     cursor.execute("""UPDATE Student SET Name=%s, Email=%s, Phone=%s, Gender=%s, 
                       Section=%s, Semester=%s, GPA=%s, DeptID=%s, TeamID=%s, FacultyID=%s, Password=%s 
                       WHERE SRN=%s""",
-                   (name, email, phone, gender, section, semester, gpa, deptid, teamid, facultyid, password, srn))
+                   (name, email, phone, gender, section, semester, gpa, deptid, teamid, facultyid, hashed_password.decode('utf-8'), srn))
     
     db.commit()
     db.close()
     
     return jsonify({'message': 'Student updated successfully!'})
 
-# Route for deleting a student via AJAX
 @app.route('/delete_student_ajax', methods=['POST'])
 @login_required
 def delete_student_ajax():
@@ -752,15 +770,18 @@ def delete_student_ajax():
 
     data = request.get_json()
     srn = data.get('srn')
-    
-    db = connect_db()
-    cursor = db.cursor()
-    cursor.execute("DELETE FROM Student WHERE SRN = %s", (srn,))
-    db.commit()
-    db.close()
-    
-    return jsonify({'message': 'Student deleted successfully!'})
 
+    try:
+        db = connect_db()
+        cursor = db.cursor()
+        cursor.execute("DELETE FROM Student WHERE SRN = %s", (srn,))
+        db.commit()
+        cursor.close()
+        db.close()
+        return jsonify({'message': 'Student deleted successfully!'})
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({'message': 'Failed to delete student'}), 500
 
 # Route to display all faculty details (Admin only)
 @app.route('/faculty_details', methods=['GET'])
@@ -794,7 +815,7 @@ def get_faculty_data(faculty_id):
 
     db = connect_db()
     cursor = db.cursor()
-    cursor.execute("SELECT FacultyID, FacultyName, Designation, PanelID FROM Faculty WHERE FacultyID = %s", (faculty_id,))
+    cursor.execute("SELECT FacultyID, FacultyName, Designation, PanelID, email, Password FROM Faculty WHERE FacultyID = %s", (faculty_id,))
     faculty = cursor.fetchone()
     db.close()
 
@@ -803,7 +824,9 @@ def get_faculty_data(faculty_id):
             'faculty_id': faculty[0],
             'name': faculty[1],
             'designation': faculty[2],
-            'panel_id': faculty[3]
+            'panel_id': faculty[3],
+            'email':faculty[4],
+            'password':faculty[5]
         }
         return jsonify(faculty_data)
     else:
@@ -821,12 +844,16 @@ def update_faculty_ajax():
     name = data.get('name')
     designation = data.get('designation')
     panel_id = data.get('panel_id')
+    email=data.get('email')
+    password=data.get('password')
 
     try:
         db = connect_db()
         cursor = db.cursor()
-        cursor.execute("""UPDATE Faculty SET FacultyName=%s, Designation=%s, PanelID=%s WHERE FacultyID=%s""",
-                       (name, designation, panel_id, faculty_id))
+        salt = bcrypt.gensalt()  # Generate a salt
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
+        cursor.execute("""UPDATE Faculty SET FacultyName=%s, Designation=%s, PanelID=%s, email=%s, Password=%s WHERE FacultyID=%s""",
+                       (name, designation, panel_id, email, hashed_password.decode('utf-8'), faculty_id))
         db.commit()
         db.close()
 
