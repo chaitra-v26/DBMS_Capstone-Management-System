@@ -1,6 +1,6 @@
 class Config:
-    SECRET_KEY = 'chai_idhu'
+    SECRET_KEY = 'Put Your Secret Key'
     DB_HOST = 'localhost'
     DB_USER = 'root'
-    DB_PASSWORD = 'Vidhu@1174'
+    DB_PASSWORD = 'Put Your Database Password'
     DB_NAME = 'capstone_management'
