@@ -41,7 +41,7 @@
                         </div>
                     </div>
                     <input type="hidden" name="panel_id" id="panel_id">
-                    <button type="submit" class="btn btn-primary">Save Panel</button>
+                    <button type="submit" class="btn btn-primary" onclick="this.disabled=true; this.form.submit();">Save Panel</button>
                 </form>
             </div>
         </div>
@@ -70,7 +70,7 @@
                                 {% if panel[0] in panel_faculty_dict %}
                                     <ul>
                                     {% for faculty in panel_faculty_dict[panel[0]] %}
-                                        <li>{{ faculty.FacultyName }} ({{ faculty.Designation }})
+                                    <li>{{ faculty.FacultyName }} ({{ faculty.Designation }}) - Faculty ID: {{ faculty.FacultyID }}
                                             <button class="btn btn-sm btn-primary" onclick="editFaculty('{{ faculty.FacultyID }}', '{{ faculty.FacultyName }}', '{{ faculty.Designation }}', '{{ panel[0] }}')">Edit Faculty</button>
                                         </li>
                                     {% endfor %}
@@ -107,7 +107,11 @@
                 </div>
                 <div class="modal-body">
                     <form action="{{ url_for('update_faculty') }}" method="POST">
-                        <input type="hidden" id="faculty_id" name="faculty_id">
+                        <!--<input type="hidden" id="faculty_id" name="faculty_id">-->
+                        <div class="mb-3">
+                            <label for="faculty_id" class="form-label">Faculty ID</label>
+                            <input type="text" class="form-control" id="faculty_id" name="faculty_id" required>
+                        </div>
                         <div class="mb-3">
                             <label for="faculty_name" class="form-label">Faculty Name</label>
                             <input type="text" class="form-control" id="faculty_name" name="faculty_name" required>

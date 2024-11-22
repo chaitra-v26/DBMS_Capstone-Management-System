@@ -23,6 +23,8 @@
                     <th>Name</th>
                     <th>Designation</th>
                     <th>Panel ID</th>
+                    <th>email</th>
+                    <th>Password</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -34,6 +36,8 @@
                         <td>{{ faculty[1] }}</td>
                         <td>{{ faculty[2] }}</td>
                         <td>{{ faculty[3] }}</td>
+                        <td>{{ faculty[5] }}</td>
+                        <td>{{ faculty[4] }}</td>
                         <td>
                             <button onclick="openUpdateModal({{ faculty[0] }})" class="btn btn-primary btn-sm">Update</button>
                             <button onclick="deleteFaculty({{ faculty[0] }})" class="btn btn-danger btn-sm">Delete</button>
@@ -74,6 +78,14 @@
                             <label for="panelId">Panel ID</label>
                             <input type="number" class="form-control" id="panelId" name="panel_id" required>
                         </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
                         <button type="button" onclick="submitUpdate()" class="btn btn-primary">Save changes</button>
                     </form>
                 </div>
@@ -91,6 +103,8 @@
                     document.getElementById('facultyName').value = data.name;
                     document.getElementById('designation').value = data.designation;
                     document.getElementById('panelId').value = data.panel_id;
+                    document.getElementById('email').value = data.email || "";  // Default to empty if not provided
+                    document.getElementById('password').value = "";  // Password reset field
                     $('#updateModal').modal('show');
                 })
                 .catch(error => console.error('Error:', error));
@@ -101,13 +115,22 @@
             const name = document.getElementById('facultyName').value;
             const designation = document.getElementById('designation').value;
             const panelId = document.getElementById('panelId').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
 
             fetch('/update_faculty_ajax', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ faculty_id: facultyId, name: name, designation: designation, panel_id: panelId })
+                body: JSON.stringify({
+                    faculty_id: facultyId,
+                    name: name,
+                    designation: designation,
+                    panel_id: panelId,
+                    email: email,
+                    password: password
+                })
             })
             .then(response => response.json())
             .then(data => {
