@@ -108,13 +108,12 @@ The system follows a three-tier architecture:
    # Login to MySQL
    mysql -u root -p
    
-   # Create database
+   # Create database and run initialization script
    CREATE DATABASE capstone_management;
+   USE capstone_management;
    
-   # Run the SQL scripts from db_scripts folder
-   source db_scripts/schema.sql;
-   source db_scripts/triggers.sql;
-   source db_scripts/procedures.sql;
+   # Run the database initialization script
+   source db_scripts/init_db.sql;
    ```
 
 5. **Configure Database Connection**
@@ -158,8 +157,6 @@ The system follows a three-tier architecture:
 4. **Evaluation Process**: Faculty evaluates students, admin enters marks
 5. **Grade Calculation**: Automated triggers calculate final grades
 6. **Reporting**: Generate comprehensive performance reports
-
-## 🗄 Database Schema
 
 ### Core Tables
 - **Department**: Academic departments
@@ -217,4 +214,7 @@ The system follows a three-tier architecture:
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
+
 ---
+
+⚡ **Built with passion for efficient educational management** ⚡
